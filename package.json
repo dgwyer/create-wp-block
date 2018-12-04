@@ -1,0 +1,17 @@
+{
+  "name": "create-wp-block",
+  "version": "1.0.0",
+  "description": "NodeJs CLI application to generate WordPress blocks.",
+  "bin": "cli.js",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/dgwyer/create-wp-block.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/dgwyer/create-wp-block/issues"
+  },
+  "homepage": "https://github.com/dgwyer/create-wp-block#readme"
+}
