@@ -1,4 +1,4 @@
-# create-wp-block
+# Create Single or Multiple WordPress Blocks
 
 Extends the WordPress core `@wordpress/create-block` package that creates a new block plugin.
 
