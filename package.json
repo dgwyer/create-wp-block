@@ -1,23 +1,26 @@
 {
   "name": "create-wp-block",
-  "version": "1.0.0",
-  "description": "NodeJs CLI application to generate WordPress blocks.",
-  "bin": "cli.js",
+  "version": "2.0.0",
+  "description": "Extends the @wordpress/create-block package by adding new features for flexible block scaffolding such as support for multiple blocks.",
+  "main": "index.js",
+  "bin": "index.js",
+  "type": "module",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/dgwyer/create-wp-block.git"
   },
   "keywords": [],
   "author": "",
-  "license": "ISC",
+  "license": "MIT",
   "bugs": {
     "url": "https://github.com/dgwyer/create-wp-block/issues"
   },
   "homepage": "https://github.com/dgwyer/create-wp-block#readme",
   "dependencies": {
-    "chalk": "^2.4.1",
-    "chalk-pipe": "^2.0.0",
-    "inquirer": "^6.2.1",
-    "yargs": "^12.0.5"
+    "execa": "^6.1.0",
+    "yargs": "^17.4.0"
   }
 }

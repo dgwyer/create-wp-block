@@ -1,19 +1,25 @@
 # create-wp-block
 
-NodeJs CLI application to generate WordPress blocks.
+Extends the WordPress core `@wordpress/create-block` package that creates a new block plugin.
+
+This npm package is meant to be a useful tool to create blocks with additional functionality currently available in `@wordpress/create-block`. Hopefully, over time, most or all of these extra features will be available in the core package.
+## New functionality
+- Specify a block name via the --name (or -n alias). By default in `@wordpress/create-block` there is no way to name a block, it's always set to the name of the plugin slug. e.g. npx create-wp-block test -n block1. Note, if the block name is specified but a plugin name (slug) is, then this will trigger interactive mode which is the default behaviour of `@wordpress/create-block` when no slug is specified.
 
 # Usage
 
-npx create-wp-block
+To create a basic plugin containing a single block:
 
-# Documentation
+`npx create-wp-block todo-list`
 
-## Arguments
+Note: This produces exactly the same plugin as `npx @wordpress/create-block todo-list`
 
-Display available options:
+Things become interesting when we use the new features:
 
-`create-wp-block --help`
+`npx create-wp-block todo-list -n block1`
 
-Display module version:
+This will create a plugin with the slug `todo-list`, which contains a single block with the slug `block1`.
 
-`create-wp-block --version`
+# Request a Feature?
+
+Are you looking for a feature to be included in this package? Simply open a [new issue](https://github.com/dgwyer/create-wp-block/issues) and let's talk! All suggestions welcome.
