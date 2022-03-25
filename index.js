@@ -39,7 +39,7 @@ Bugs:
 
 */
 
-console.log("Args:\n");
+console.log("1. Args:\n");
 console.log(argv);
 
 let pluginSlug;
@@ -60,8 +60,8 @@ const cb = (error, stdout, stderr) => {
 };
 
 execa(
-  'npx',
-  ['@wordpress/create-block', pluginSlug, '--no-wp-scripts'],
+  'npm',
+  ['exec', '--', '@wordpress/create-block', pluginSlug, '--no-wp-scripts'],
   {
     cwd: './out',
     stdin: 'inherit'
