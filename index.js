@@ -22,6 +22,7 @@ const argv = yargs(process.argv.slice(2))
 - See what happens when you don't enter a plugin slug, with/without a block name(s).
 - Add tailwind support. Note for this we'll need to publish a template to integrate Tailwind for a single block.
 - Add keywords to package.json.
+- Don't think we have to locally install @wordpress/create-block?
 - AplineJS support?
 
 */
@@ -38,7 +39,7 @@ Bugs:
 
 */
 
-console.log("Passed in args:\n");
+console.log("9. Passed in args:\n");
 console.log(argv);
 
 let pluginSlug;
@@ -59,8 +60,8 @@ const cb = (error, stdout, stderr) => {
 };
 
 execa(
-  'npm',
-  ['exec', '--', '@wordpress/create-block', pluginSlug, '--no-wp-scripts'],
+  'npx',
+  ['@wordpress/create-block', pluginSlug, '--no-wp-scripts'],
   {
     cwd: './out',
     stdin: 'inherit'
