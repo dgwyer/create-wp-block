@@ -1,3 +1,4 @@
+#!/usr/bin/env node
 import yargs from "yargs";
 import { execa } from 'execa';
 
@@ -20,6 +21,7 @@ const argv = yargs(process.argv.slice(2))
 - Try to capture multiple block names.
 - See what happens when you don't enter a plugin slug, with/without a block name(s).
 - Add tailwind support. Note for this we'll need to publish a template to integrate Tailwind for a single block.
+- Add keywords to package.json.
 - AplineJS support?
 - Change 'master' branch to 'main'.
 
