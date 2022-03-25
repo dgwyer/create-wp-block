@@ -23,7 +23,6 @@ const argv = yargs(process.argv.slice(2))
 - Add tailwind support. Note for this we'll need to publish a template to integrate Tailwind for a single block.
 - Add keywords to package.json.
 - AplineJS support?
-- Change 'master' branch to 'main'.
 
 */
 

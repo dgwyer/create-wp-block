@@ -20,6 +20,7 @@
   },
   "homepage": "https://github.com/dgwyer/create-wp-block#readme",
   "dependencies": {
+    "@wordpress/create-block": "^3.0.1",
     "execa": "^6.1.0",
     "yargs": "^17.4.0"
   }
