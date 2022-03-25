@@ -39,7 +39,7 @@ Bugs:
 
 */
 
-console.log("1. Args:\n");
+console.log("Passed in args:\n");
 console.log(argv);
 
 let pluginSlug;
