@@ -1,9 +1,11 @@
 {
-  "name": "create-wp-block",
-  "version": "2.3.2",
+  "name": "@wpgoplugins/cb",
+  "version": "1.3.0",
   "description": "Extends the @wordpress/create-block package by adding new features for flexible block scaffolding such as support for multiple blocks.",
-  "main": "index.js",
-  "bin": "index.js",
+  "main": "./index.js",
+  "bin": {
+    "@wpgoplugins/cb": "./index.js"
+  },
   "type": "module",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
