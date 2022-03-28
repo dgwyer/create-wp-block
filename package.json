@@ -24,6 +24,7 @@
   "dependencies": {
     "@wordpress/create-block": "^3.0.1",
     "execa": "^6.1.0",
+    "replace-in-file": "^6.3.2",
     "yargs": "^17.4.0"
   }
 }
