@@ -1,6 +1,6 @@
 {
   "name": "@wpgoplugins/cb",
-  "version": "1.3.0",
+  "version": "1.4.0",
   "description": "Extends the @wordpress/create-block package by adding new features for flexible block scaffolding such as support for multiple blocks.",
   "main": "./index.js",
   "bin": {
