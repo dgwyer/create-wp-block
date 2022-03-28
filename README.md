@@ -14,7 +14,7 @@ To create a basic plugin containing a single block:
 
 `npx create-wp-block todo-list`
 
-Note: This produces exactly the same plugin as `npx @wordpress/create-block todo-list`
+**Note: This produces exactly the same plugin as `npx @wordpress/create-block todo-list`**
 
 Things become interesting when we use the new features:
 
