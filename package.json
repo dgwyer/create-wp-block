@@ -14,7 +14,12 @@
     "type": "git",
     "url": "git+https://github.com/dgwyer/create-wp-block.git"
   },
-  "keywords": [],
+  "keywords": [
+    "wordpress",
+    "gutenberg",
+    "block",
+    "scaffold"
+  ],
   "author": "",
   "license": "MIT",
   "bugs": {
@@ -26,5 +31,8 @@
     "execa": "^6.1.0",
     "replace-in-file": "^6.3.2",
     "yargs": "^17.4.0"
+  },
+  "publishConfig": {
+    "access": "public"
   }
 }

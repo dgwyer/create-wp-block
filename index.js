@@ -1,49 +1,21 @@
 #!/usr/bin/env node
 import yargs from "yargs";
-import { execa } from 'execa';
+import { execa, execaCommand, execaCommandSync } from 'execa';
+import { join } from 'path';
 import replace from 'replace-in-file';
+import { log } from './log.js';
 
 const argv = yargs(process.argv.slice(2))
   .alias('name', 'n')
+  .alias('no-wp-scripts', 's')
   .alias('block', 'b')
   .alias('dir', 'd')
   .array('name')
   .array('block')
-  //.boolean('auto_deploy')
+  .boolean('ns')
+  //.default('ns', false)
   //.number('dropbox_base_index')
   .argv;
-
-/* Todo
-
-- Test running this from a separate app.
-- Setup a test app to test locally.
-- npm link package and test app.
-- Get it to run @wordpress/create-block with no scripts to begin with to make sure everything is running.
-- Try to capture a block name and run the core package and run a test post script to console log the block name.
-- Add post script code to format the block to have the new block name. Can we use mustache for this?
-- Try to capture multiple block names.
-- See what happens when you don't enter a plugin slug, with/without a block name(s).
-- Add tailwind support. Note for this we'll need to publish a template to integrate Tailwind for a single block.
-- Add keywords to package.json.
-- Don't think we have to locally install @wordpress/create-block?
-- AplineJS support?
-
-*/
-
-/*
-
-Done:
-- Capture single or multiple block names.
-- Output @wordpress/create-block to './out' folder.
-- Pass in the plugin slug as a CLI option.
-
-Bugs:
-- When in interactive mode each line of prompt text is outputted twice.
-
-*/
-
-console.log("11. Passed in args:\n");
-console.log(argv);
 
 let pluginSlug;
 
@@ -57,6 +29,16 @@ if (argv._) {
   }
 }
 
+log('\nLet\'s create some blocks! This may take a couple of minutes...');
+
+console.log(`\nCreating a new WordPress plugin with slug: "${pluginSlug}"\n`);
+
+if (argv.b && typeof (argv.b) === 'object') {
+  console.log("Creating the following named blocks:", ...argv.b);
+  log('\n---');
+}
+//console.log("\nPassed in args:\n", argv);
+
 const cb = (error, stdout, stderr) => {
   if (error) {
     console.error(`exec error: ${error}`);
@@ -66,63 +48,130 @@ const cb = (error, stdout, stderr) => {
   console.error(stderr);
 };
 
-const createBlockScript = await execa(
-  "npx",
-  // ["@wordpress/create-block", pluginSlug],
-  ["@wordpress/create-block", pluginSlug, "--no-wp-scripts"],
-  {
-    stdin: 'inherit'
-  }
-);
-// ).stdout.pipe(process.stdout);
-console.log(createBlockScript.stdout);
+const opt = [];
+if (argv.s) {
+  opt.push('--no-wp-scripts');
+}
 
-console.log("Let's do some post processing now.");
+// log(execaCommandSync(`npx @wordpress/create-block ${pluginSlug}`, { stdin: 'inherit' }).stdout);
+log(execaCommandSync(`npx @wordpress/create-block ${pluginSlug} ${opt.join(' ')}`, { stdin: 'inherit' }).stdout);
+
+// await execa(
+//   "npx",
+//   // ["@wordpress/create-block", pluginSlug],
+//   ["@wordpress/create-block", pluginSlug, "--no-wp-scripts"],
+//   {
+//     stdin: 'inherit'
+//   }
+// ).stdout.pipe(process.stdout);
+//console.log(createBlockScript.stdout);
+
+console.log("\nPost processing...\n");
 
 if (argv.b && typeof (argv.b) === 'object') {
 
-  console.log("GOT SOME BLOCK NAMES", argv.b.length);
+  //console.log("GOT SOME BLOCK NAMES", argv.b.length);
   if (argv.b.length === 1) {
-    console.log("SINGLE BLOCK NAME", argv.b[0]);
-    rename(argv.b[0]);
+    //console.log("Single block name:", argv.b[0]);
+    renameBlockFiles(argv.b[0], `${pluginSlug}/src`, pluginSlug);
   }
 
   if (argv.b.length > 1) {
-    console.log("MULTIPLE BLOCK NAMES", ...argv.b);
+    //console.log("Multiple block names:", ...argv.b);
+
+    argv.b.forEach((item, index) => {
+
+      // Handle first block slightly differently (move into folder and rename).
+      if (index === 0) {
+        // Move block files into a new folder using the block name for the folder.
+        log(execaCommandSync(`mkdir ${pluginSlug}/src/${argv.b[index]}`).stdout);
+        // log(execaCommandSync(`mkdir ${pluginSlug}/src/${argv.b[index]} -v`).stdout);
+        log(execaCommandSync(`mv *.* ${argv.b[index]}`, { cwd: `${pluginSlug}/src` }).stdout);
+
+        // Rename block files.
+        renameBlockFiles(argv.b[index], `${pluginSlug}/src/${argv.b[index]}`, pluginSlug);
+
+        // Update PHP block registration code to include the block path.
+        renameFirstPhpBlock(argv.b[index], pluginSlug);
+      } else {
+        // For all other blocks just copy first block folder and rename.
+
+        // Move block files into a new folder using the block name for the folder.
+        log(execaCommandSync(`cp -R ${pluginSlug}/src/${argv.b[0]} ${pluginSlug}/src/${argv.b[index]}`).stdout);
+
+        // Rename block files.
+        renameBlockFiles(argv.b[index], `${pluginSlug}/src/${argv.b[index]}`, argv.b[0]);
+
+        // Update PHP block registration code to include the block path.
+        renamePhpBlock(argv.b[index], pluginSlug);
+      }
+    });
   }
 
   if (argv.b.length === 0) {
     // Use plugin slug if no block name specified. 
-    console.log("NO BLOCK NAME. USING PLUGIN SLUG", pluginSlug);
+    //console.log("NO BLOCK NAME. USING PLUGIN SLUG", pluginSlug);
   }
 } else {
-  console.log("NO BLOCK NAMES - JUST PROCEED AS NORMAL");
+  //console.log("NO BLOCK NAMES - JUST PROCEED AS NORMAL");
   //pluginSlug = ''; // If no plugin slug then trigger interactive mode for npx @wordpress/create-block
 }
 
-// Change directory and do a final rebuild.
-const changeDir = await execa(
-  'sh',
-  ['-c', `cd ${ pluginSlug } && pwd`]
-);
-console.log("??", changeDir);
+// Rebuild plugin files only if '--no-wp-scripts' isn't set.
+if (!argv.s) {
+  log('\nRebuilding plugin files for production.');
+  log(execaCommandSync(`npm run build`, { cwd: `${pluginSlug}` }).stdout);
+}
 
-// const reRunBuild = await execa(
-//   "npm",
-//   ["run", "build"]
-// );
+log('\nAll finished. Happy block development!');
 
 // ============
 
-async function rename(blockName) {
-  
+function renameFirstPhpBlock(blockName, path) {
+
+  let options = {
+    files: `${path}/${pluginSlug}.php`,
+    from: /build/gm,
+    to: `build/${blockName.toLowerCase()}`,
+  };
+
+  // Synchronous replacement.
+  try {
+    const results = replace.sync(options);
+    //console.log('Replacement results:', results);
+  }
+  catch (error) {
+    //console.error('Error occurred:', error);
+  }
+}
+
+function renamePhpBlock(blockName, path) {
+
+  let options = {
+    files: `${path}/${pluginSlug}.php`,
+    from: /^}/gm,
+    to: `	register_block_type( __DIR__ . '/build/${blockName}' );\n}`,
+  };
+
+  // Synchronous replacement.
+  try {
+    const results = replace.sync(options);
+    //console.log('Replacement results:', results);
+  }
+  catch (error) {
+    //console.error('Error occurred:', error);
+  }
+}
+
+function renameBlockFiles(blockName, path, replaceStr) {
+
   // 1. Replace block name.
   let options = {
-    files: `${pluginSlug}/src/block.json`,
+    files: `${path}/block.json`,
     from: /"name": "(create-block\/{1})(.*)?"/gm,
     to: `"name": "$1${blockName.toLowerCase()}"`,
   };
-  
+
   // Synchronous replacement.
   try {
     const results = replace.sync(options);
@@ -132,10 +181,10 @@ async function rename(blockName) {
     //console.error('Error occurred:', error);
   }
 
-  // 2. Replace block name.
-  let regex = new RegExp(`"title": "(${capitalize(pluginSlug)}{1})(.*)?"`, 'gm');
+  // 2. Replace block title.
+  let regex = new RegExp(`"title": "(${capitalize(replaceStr)}{1})(.*)?"`, 'gm');
   options = {
-    files: `${pluginSlug}/src/block.json`,
+    files: `${path}/block.json`,
     from: regex,
     to: `"title": "${capitalize(blockName)}"`,
   };
@@ -150,9 +199,9 @@ async function rename(blockName) {
   }
 
   // 3. Replace style.scss selector.
-  regex = new RegExp(`.wp-block-create-block-${pluginSlug}`);
+  regex = new RegExp(`.wp-block-create-block-${replaceStr}`);
   options = {
-    files: `${pluginSlug}/src/style.scss`,
+    files: `${path}/style.scss`,
     from: regex,
     to: `.wp-block-create-block-${blockName.toLowerCase()}`,
   };
@@ -167,9 +216,9 @@ async function rename(blockName) {
   }
 
   // 4. Replace editor.scss selector.
-  regex = new RegExp(`.wp-block-create-block-${pluginSlug}`);
+  regex = new RegExp(`.wp-block-create-block-${replaceStr}`);
   options = {
-    files: `${pluginSlug}/src/editor.scss`,
+    files: `${path}/editor.scss`,
     from: regex,
     to: `.wp-block-create-block-${blockName.toLowerCase()}`,
   };
@@ -184,9 +233,9 @@ async function rename(blockName) {
   }
 
   // 5. Replace block name in index.js.
-  regex = new RegExp(`create-block/${pluginSlug}`);
+  regex = new RegExp(`create-block/${replaceStr}`);
   options = {
-    files: `${pluginSlug}/src/index.js`,
+    files: `${path}/index.js`,
     from: regex,
     to: `create-block/${blockName.toLowerCase()}`,
   };
@@ -203,24 +252,6 @@ async function rename(blockName) {
   //const { stdout, stdin, stderr } = await execa("ls");
   //console.log(stdout);
 }
-
-/*
-
-- Rename procedure:
-  - [done] block.json: update name, title properties.
-  - [done] style.scss: update CSS selector.
-  - [done] editor.scss: update CSS selector.
-  - [done] index.js: update block registration
-- Move procedure:
-  - Move all scr files into subfolder.
-  - Update PHP plugin file with folder name.
-  - If more than one block then copy block folder and rename that.
-
-- If -b is an array with length 1 just rename block, no need to add to sub folder.
-- If -b is an array with length other than 1 then add to sub folders for each block and rename as you loop through the block names.
-- Do another build as some items will have been moved/renamed.
-
-*/
 
 function capitalize(str) {
   const lower = str.toLowerCase();
