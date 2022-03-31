@@ -264,10 +264,10 @@ function renameBlockFiles(blockName, path, replaceStr) {
     // Synchronous replacement.
     try {
       const results = replace.sync(options);
-      console.log('Replacement results:', results);
+      //console.log('Replacement results:', results);
     }
     catch (error) {
-      console.error('Error occurred:', error);
+      //console.error('Error occurred:', error);
     }
   }
 
