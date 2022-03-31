@@ -7,7 +7,7 @@ import { log } from './log.js';
 
 const argv = yargs(process.argv.slice(2))
   .alias('name', 'n')
-  .alias('no-wp-scripts', 's')
+  //.alias('no-wp-scripts', 's')
   .alias('block', 'b')
   .alias('dir', 'd')
   .array('name')
@@ -37,7 +37,7 @@ if (argv.b && typeof (argv.b) === 'object') {
   console.log("Creating the following named blocks:", ...argv.b);
   log('\n---');
 }
-//console.log("\nPassed in args:\n", argv);
+console.log("\nPassed in args:\n", argv);
 
 const cb = (error, stdout, stderr) => {
   if (error) {
@@ -49,8 +49,11 @@ const cb = (error, stdout, stderr) => {
 };
 
 const opt = [];
-if (argv.s) {
+if (argv.ns) {
   opt.push('--no-wp-scripts');
+}
+if (argv.tw) {
+  opt.push('-t tw-block');
 }
 
 // log(execaCommandSync(`npx @wordpress/create-block ${pluginSlug}`, { stdin: 'inherit' }).stdout);
@@ -96,7 +99,7 @@ if (argv.b && typeof (argv.b) === 'object') {
       } else {
         // For all other blocks just copy first block folder and rename.
 
-        // Move block files into a new folder using the block name for the folder.
+        // Copy the first block folder to a new folder using the current block name for the folder.
         log(execaCommandSync(`cp -R ${pluginSlug}/src/${argv.b[0]} ${pluginSlug}/src/${argv.b[index]}`).stdout);
 
         // Rename block files.
@@ -118,7 +121,7 @@ if (argv.b && typeof (argv.b) === 'object') {
 }
 
 // Rebuild plugin files only if '--no-wp-scripts' isn't set.
-if (!argv.s) {
+if (!argv.ns) {
   log('\nRebuilding plugin files for production.');
   log(execaCommandSync(`npm run build`, { cwd: `${pluginSlug}` }).stdout);
 }
