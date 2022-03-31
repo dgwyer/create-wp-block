@@ -31,7 +31,7 @@ if (argv._) {
 
 log('\nLet\'s create some blocks! This may take a couple of minutes...');
 
-console.log(`\nCreating a new WordPress plugin with slug: "${pluginSlug}"\n`);
+console.log(`\nCreating a new WordPress plugin with slug: ${pluginSlug}\n`);
 
 if (argv.b && typeof (argv.b) === 'object') {
   console.log("Creating the following named blocks:", ...argv.b);
@@ -185,7 +185,8 @@ function renameBlockFiles(blockName, path, replaceStr) {
   }
 
   // 2. Replace block title.
-  let regex = new RegExp(`"title": "(${capitalize(replaceStr)}{1})(.*)?"`, 'gm');
+  //console.log(`DEBUGGING: ${path}/block.json >> ${capitalize(replaceStr)} >> ${blockName}`);
+  let regex = new RegExp(`"title": "(.*?)"`, 'gm');
   options = {
     files: `${path}/block.json`,
     from: regex,

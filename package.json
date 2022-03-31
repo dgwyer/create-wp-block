@@ -1,6 +1,6 @@
 {
   "name": "create-wp-block",
-  "version": "2.4.1",
+  "version": "2.5.0",
   "description": "Extends the @wordpress/create-block package by adding new features for flexible block scaffolding such as support for multiple blocks.",
   "main": "./index.js",
   "bin": {
