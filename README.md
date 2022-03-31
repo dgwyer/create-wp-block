@@ -4,13 +4,15 @@ Extends the WordPress core `@wordpress/create-block` package that creates a new 
 
 - Single named blocks.
 - Multiple named blocks.
-- Tailwind CSS support (coming soon).
+- Full Tailwind CSS integration.
 
 The `create-wp-blocks` script is meant to be a useful tool to create blocks with additional functionality currently available in `@wordpress/create-block`. Hopefully, over time, most (or all) of these extra features will be available in the core package and this one can be deprecated.
 ## New functionality
 Specify a block name via the `--block` (or `-b` alias). By default in `@wordpress/create-block` there's no way to name a block, it's always set to the name of the plugin slug. e.g. `npx create-wp-block test -b block1`.
 
 Note, if the block name is specified but a plugin name (slug) is, then this will trigger interactive mode which is the default behaviour of `@wordpress/create-block` when no slug is specified.
+
+Optional Tailwind CSS integration is now available via the `--tw` flag.
 
 # Usage
 
@@ -31,6 +33,18 @@ Create multiple blocks with:
 `npx create-wp-block todo-list -b block1 block2 block3`
 
 This will create a plugin with the slug `todo-list`, which contains three blocks with slugs: `block1`, `block2`, `block3`. Each block is located inside its own sub-folder. e.g. `/src/block1/`.
+
+Enable full Tailwind integration with the `--tw` option:
+
+`npx create-wp-block todo-list -b block1 block2 block3 --tw`
+
+Each block compiles its own Tailwind styles, which is inline with how blocks are compiled with `@wordpress/create-block`. Blocks continue to maintain their own styles independently.
+
+For quick testing you can disable wp-scripts with the `--ns` option:
+
+`npx create-wp-block todo-list -b block1 block2 block3 --ns`
+
+This doesn't install npm modules and creates the block plugin much quicker.
 
 # Trouble Shooting
 

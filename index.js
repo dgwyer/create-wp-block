@@ -37,7 +37,7 @@ if (argv.b && typeof (argv.b) === 'object') {
   console.log("Creating the following named blocks:", ...argv.b);
   log('\n---');
 }
-console.log("\nPassed in args:\n", argv);
+//console.log("\nPassed in args:\n", argv);
 
 const cb = (error, stdout, stderr) => {
   if (error) {
@@ -250,6 +250,25 @@ function renameBlockFiles(blockName, path, replaceStr) {
   }
   catch (error) {
     //console.error('Error occurred:', error);
+  }
+
+  // 6. Replace block name in tailwind.config.js, only if we're integrating with Tailwind CSS.
+  if (argv.tw) {
+    regex = new RegExp(`content`);
+    options = {
+      files: `${path}/tailwind.config.js`,
+      from: /content: \[(.*?)\]/gm,
+      to: `content: ['./src/${ blockName.toLowerCase()}/*.js']`,
+    };
+
+    // Synchronous replacement.
+    try {
+      const results = replace.sync(options);
+      console.log('Replacement results:', results);
+    }
+    catch (error) {
+      console.error('Error occurred:', error);
+    }
   }
 
   //const { stdout, stdin, stderr } = await execa("ls");
