@@ -4,9 +4,11 @@ import { execa, execaCommand, execaCommandSync } from 'execa';
 import { join } from 'path';
 import replace from 'replace-in-file';
 import { log } from './log.js';
+import { readFile } from 'fs/promises';
 
 const argv = yargs(process.argv.slice(2))
   .alias('name', 'n')
+  .alias('namespace', 'nsp')
   //.alias('no-wp-scripts', 's')
   .alias('block', 'b')
   .alias('dir', 'd')
@@ -29,13 +31,21 @@ if (argv._) {
   }
 }
 
-log('\nLet\'s create some blocks! This may take a couple of minutes...');
+const json = JSON.parse(
+  await readFile(
+    new URL('./package.json', import.meta.url)
+  )
+);
+log('\nVersion: ' + json.version);
+log('\nBy David Gwyer');
+log('\nLet\'s create some blocks!');
 
-console.log(`\nCreating a new WordPress plugin with slug: ${pluginSlug}\n`);
+log('\n---');
+
+console.log(`\nCreating a new WordPress plugin with slug: ${pluginSlug}`);
 
 if (argv.b && typeof (argv.b) === 'object') {
-  console.log("Creating the following named blocks:", ...argv.b);
-  log('\n---');
+  console.log("\nCreating the following named blocks:", argv.b.join(', '));
 }
 //console.log("\nPassed in args:\n", argv);
 
@@ -55,9 +65,24 @@ if (argv.ns) {
 if (argv.tw) {
   opt.push('-t tw-block');
 }
+if (argv.nsp) {
+  opt.push(`--namespace ${argv.nsp}`);
+}
+
+//opt.push(`--title ${pluginSlug}`);
+
+log('\nBlock options: ' + opt.join(' '));
 
 // log(execaCommandSync(`npx @wordpress/create-block ${pluginSlug}`, { stdin: 'inherit' }).stdout);
-log(execaCommandSync(`npx @wordpress/create-block ${pluginSlug} ${opt.join(' ')}`, { stdin: 'inherit' }).stdout);
+log(`\nRunning package: npx @wordpress/create-block ${pluginSlug} ${opt.join(' ')}`);
+log('\n---');
+
+const subprocess = execaCommand(`npx @wordpress/create-block ${pluginSlug} ${opt.join(' ')}`);
+subprocess.stdout.pipe(process.stdout);
+const { stdout } = await subprocess;
+console.log('\n', stdout);
+
+// log(execaCommandSync(`npx @wordpress/create-block ${pluginSlug} ${opt.join(' ')}`, { shell: true, stdin: 'inherit' }).stdout);
 
 // await execa(
 //   "npx",
@@ -69,27 +94,26 @@ log(execaCommandSync(`npx @wordpress/create-block ${pluginSlug} ${opt.join(' ')}
 // ).stdout.pipe(process.stdout);
 //console.log(createBlockScript.stdout);
 
-console.log("\nPost processing...\n");
+console.log("\nPost processing...");
 
 if (argv.b && typeof (argv.b) === 'object') {
 
-  //console.log("GOT SOME BLOCK NAMES", argv.b.length);
   if (argv.b.length === 1) {
-    //console.log("Single block name:", argv.b[0]);
+    console.log("Single block name:", argv.b[0]);
     renameBlockFiles(argv.b[0], `${pluginSlug}/src`, pluginSlug);
   }
 
   if (argv.b.length > 1) {
-    //console.log("Multiple block names:", ...argv.b);
+    console.log("\nInstalling blocks:", ...argv.b);
 
     argv.b.forEach((item, index) => {
 
       // Handle first block slightly differently (move into folder and rename).
       if (index === 0) {
         // Move block files into a new folder using the block name for the folder.
-        log(execaCommandSync(`mkdir ${pluginSlug}/src/${argv.b[index]}`).stdout);
+        execaCommandSync(`mkdir ${pluginSlug}/src/${argv.b[index]}`);
         // log(execaCommandSync(`mkdir ${pluginSlug}/src/${argv.b[index]} -v`).stdout);
-        log(execaCommandSync(`mv *.* ${argv.b[index]}`, { cwd: `${pluginSlug}/src` }).stdout);
+        execaCommandSync(`mv *.* ${argv.b[index]}`, { cwd: `${pluginSlug}/src` });
 
         // Rename block files.
         renameBlockFiles(argv.b[index], `${pluginSlug}/src/${argv.b[index]}`, pluginSlug);
@@ -100,7 +124,7 @@ if (argv.b && typeof (argv.b) === 'object') {
         // For all other blocks just copy first block folder and rename.
 
         // Copy the first block folder to a new folder using the current block name for the folder.
-        log(execaCommandSync(`cp -R ${pluginSlug}/src/${argv.b[0]} ${pluginSlug}/src/${argv.b[index]}`).stdout);
+        execaCommandSync(`cp -R ${pluginSlug}/src/${argv.b[0]} ${pluginSlug}/src/${argv.b[index]}`);
 
         // Rename block files.
         renameBlockFiles(argv.b[index], `${pluginSlug}/src/${argv.b[index]}`, argv.b[0]);
@@ -123,10 +147,11 @@ if (argv.b && typeof (argv.b) === 'object') {
 // Rebuild plugin files only if '--no-wp-scripts' isn't set.
 if (!argv.ns) {
   log('\nRebuilding plugin files for production.');
-  log(execaCommandSync(`npm run build`, { cwd: `${pluginSlug}` }).stdout);
+  log(execaCommandSync(`npm run build`, { cwd: `${pluginSlug}`, stdin: 'inherit' }).stdout);
 }
 
 log('\nAll finished. Happy block development!');
+log('\nFollow me on Twitter: dgwyer');
 
 // ============
 
@@ -171,105 +196,52 @@ function renameBlockFiles(blockName, path, replaceStr) {
   // 1. Replace block name.
   let options = {
     files: `${path}/block.json`,
-    from: /"name": "(create-block\/{1})(.*)?"/gm,
+    from: new RegExp(`"name": "(create-block\/{1})(.*)?"`, 'gm'),
     to: `"name": "$1${blockName.toLowerCase()}"`,
   };
-
-  // Synchronous replacement.
-  try {
-    const results = replace.sync(options);
-    //console.log('Replacement results:', results);
-  }
-  catch (error) {
-    //console.error('Error occurred:', error);
-  }
+  replaceSync(options);
 
   // 2. Replace block title.
   //console.log(`DEBUGGING: ${path}/block.json >> ${capitalize(replaceStr)} >> ${blockName}`);
-  let regex = new RegExp(`"title": "(.*?)"`, 'gm');
   options = {
     files: `${path}/block.json`,
-    from: regex,
+    from: new RegExp(`"title": "(.*?)"`, 'gm'),
     to: `"title": "${capitalize(blockName)}"`,
   };
-
-  // Synchronous replacement.
-  try {
-    const results = replace.sync(options);
-    //console.log('Replacement results:', results);
-  }
-  catch (error) {
-    //console.error('Error occurred:', error);
-  }
+  replaceSync(options);
 
   // 3. Replace style.scss selector.
-  regex = new RegExp(`.wp-block-create-block-${replaceStr}`);
   options = {
     files: `${path}/style.scss`,
-    from: regex,
+    from: new RegExp(`.wp-block-create-block-${replaceStr}`),
     to: `.wp-block-create-block-${blockName.toLowerCase()}`,
   };
-
-  // Synchronous replacement.
-  try {
-    const results = replace.sync(options);
-    //console.log('Replacement results:', results);
-  }
-  catch (error) {
-    //console.error('Error occurred:', error);
-  }
+  replaceSync(options);
 
   // 4. Replace editor.scss selector.
-  regex = new RegExp(`.wp-block-create-block-${replaceStr}`);
   options = {
     files: `${path}/editor.scss`,
-    from: regex,
+    from: new RegExp(`.wp-block-create-block-${replaceStr}`),
     to: `.wp-block-create-block-${blockName.toLowerCase()}`,
   };
-
-  // Synchronous replacement.
-  try {
-    const results = replace.sync(options);
-    //console.log('Replacement results:', results);
-  }
-  catch (error) {
-    //console.error('Error occurred:', error);
-  }
+  replaceSync(options);
 
   // 5. Replace block name in index.js.
-  regex = new RegExp(`create-block/${replaceStr}`);
   options = {
     files: `${path}/index.js`,
-    from: regex,
+    from: new RegExp(`create-block/${replaceStr}`),
     to: `create-block/${blockName.toLowerCase()}`,
   };
-
-  // Synchronous replacement.
-  try {
-    const results = replace.sync(options);
-    //console.log('Replacement results:', results);
-  }
-  catch (error) {
-    //console.error('Error occurred:', error);
-  }
+  replaceSync(options);
 
   // 6. Replace block name in tailwind.config.js, only if we're integrating with Tailwind CSS.
   if (argv.tw) {
-    regex = new RegExp(`content`);
     options = {
       files: `${path}/tailwind.config.js`,
       from: /content: \[(.*?)\]/gm,
-      to: `content: ['./src/${ blockName.toLowerCase()}/*.js']`,
+      to: `content: ['./src/${blockName.toLowerCase()}/*.js']`,
     };
-
-    // Synchronous replacement.
-    try {
-      const results = replace.sync(options);
-      //console.log('Replacement results:', results);
-    }
-    catch (error) {
-      //console.error('Error occurred:', error);
-    }
+    replaceSync(options);
   }
 
   //const { stdout, stdin, stderr } = await execa("ls");
@@ -279,4 +251,15 @@ function renameBlockFiles(blockName, path, replaceStr) {
 function capitalize(str) {
   const lower = str.toLowerCase();
   return str.charAt(0).toUpperCase() + lower.slice(1);
+}
+
+function replaceSync(options, log = false) {
+  // Synchronous replacement.
+  try {
+    const results = replace.sync(options);
+    if(log) { console.log('Replacement results:', results); }
+  }
+  catch (error) {
+    if (log) { console.error('Error occurred:', error); }
+  }
 }

@@ -44,7 +44,7 @@ For quick testing you can disable wp-scripts with the `--ns` option:
 
 `npx create-wp-block todo-list -b block1 block2 block3 --ns`
 
-This doesn't install npm modules and creates the block plugin much quicker.
+This doesn't install npm modules and creates the block plugin much quicker. However, you'll need to manually run `npm install` to do an initial build of the plugin block JavaScript code.
 
 # Trouble Shooting
 

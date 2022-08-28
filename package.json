@@ -1,6 +1,6 @@
 {
   "name": "create-wp-block",
-  "version": "2.5.0",
+  "version": "2.6.0",
   "description": "Extends the @wordpress/create-block package by adding new features for flexible block scaffolding such as support for multiple blocks.",
   "main": "./index.js",
   "bin": {
@@ -27,10 +27,10 @@
   },
   "homepage": "https://github.com/dgwyer/create-wp-block#readme",
   "dependencies": {
-    "@wordpress/create-block": "^3.0.1",
+    "@wordpress/create-block": "^3.8.0",
     "execa": "^6.1.0",
-    "replace-in-file": "^6.3.2",
-    "yargs": "^17.4.0"
+    "replace-in-file": "^6.3.5",
+    "yargs": "^17.5.1"
   },
   "publishConfig": {
     "access": "public"
